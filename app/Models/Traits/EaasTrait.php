@@ -2,16 +2,24 @@
 
 namespace App\Models\Traits;
 
+use App\Services\EassService;
 use Illuminate\Support\Facades\Crypt;
 
 trait EaasTrait {
+
+    protected $eaasService;
+
+    public function __construct(array $attributes = array()) {
+      $this->eaasService = new EassService();
+      parent::__construct($attributes);
+    }
     // Encrypt attributes before saving to the database
     public function setAttribute($key, $value)
     {
         // Check if the row has a specific vault value before applying encryption
         if (in_array($key, $this->encryptedColumns) && $this->shouldEncrypt()) {
             // Encrypt the value if it's in the encrypted columns list
-            $value = Crypt::encryptString($value);
+            $value = $this->eaasService->encrypt($value);
         }
         return parent::setAttribute($key, $value);
     }
@@ -20,11 +28,14 @@ trait EaasTrait {
     public function getAttribute($key)
     {
         $value = parent::getAttribute($key);
-
+        $old_value = $value;
         // Check if the row has a specific vault value before applying decryption
         if (in_array($key, $this->encryptedColumns) && $this->shouldDecrypt()) {
             // Decrypt the value if it's in the encrypted columns list
-            $value = Crypt::decryptString($value);
+            $value = $this->eaasService->decryptByVersion($value, $this->encryption_key_version);
+            if($value == ""){
+                return $old_value;
+            }
         }
 
         return $value;
@@ -47,7 +58,7 @@ trait EaasTrait {
     protected function getEncryptionKeyVersion(): string
     {
         // Example version; replace with actual key version retrieval logic
-        return 'v1';  // e.g., retrieve from a config or vault system
+        return $this->eaasService->getEncryptionKeyVersion();  // e.g., retrieve from a config or vault system
     }
 
     protected function setEncryptionKeyVersion()
