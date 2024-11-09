@@ -3,7 +3,6 @@
 namespace App\Models\Traits;
 
 use App\Services\EassService;
-use Illuminate\Support\Facades\Crypt;
 
 trait EaasTrait {
 
