@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\EncryptionKey;
 use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
@@ -11,7 +10,9 @@ class EassService
 {
     private const METHOD = 'aes-256-cbc';
     private $key = "";
+    private $vaultClient;
     public function __construct() {
+        $this->vaultClient = new VaultService();
         $this->key = $this->getEncryptionKey();
     }
     /**
@@ -96,13 +97,12 @@ class EassService
             return $encryptionKey["key"];
         }else{
             /// if not in cahce retrive from database or vault 
-            $key = EncryptionKey::latest('created_at')->first();;
-            if(isset($key)){
-                $keyData = ['key' => $key->key, 'key_version' => "v".$key->version];
-                Cache::put('encryption_key', $keyData, now()->addMinutes(2)); // Cache for 10 minutes
-                $this->rotateKey();
-                // return the key 
-                return $key->key;
+            $this->rotateKey();
+            $key_data = $this->vaultClient->getData();
+            if(isset($key_data["data"])){
+                $keyData = ['key' => $key_data["data"]["key"], 'key_version' => "v".$key_data["metadata"]["version"]];
+                Cache::put('encryption_key', $keyData, now()->addMinutes(1)); // Cache for 10 minutes                // return the key 
+                return $key_data["data"]["key"];
             }
         }
     }
@@ -113,13 +113,13 @@ class EassService
             return $encryptionKey["key_version"];
         }else{
             /// if not in cahce retrive from database or vault 
-            $key = EncryptionKey::latest('created_at')->first();;
-            if(isset($key)){
-                $keyData = ['key' => $key->key, 'key_version' => "v".$key->version];
-                Cache::put('encryption_key', $keyData, now()->addMinutes(2)); // Cache for 10 minutes
-                $this->rotateKey();
+            $this->rotateKey();
+            $key_data = $this->vaultClient->getData();
+            if(isset($key_data["data"])){
+                $keyData = ['key' => $key_data["data"]["key"], 'key_version' => "v".$key_data["metadata"]["version"]];
+                Cache::put('encryption_key', $keyData, now()->addMinutes(1)); // Cache for 10 minutes
                 // return the key 
-                return "v".$key->version;
+                return "v".$key_data["metadata"]["version"];
             }
         }
     }
@@ -130,11 +130,11 @@ class EassService
             return $encryptionKey["key"];
         }else{
             $version = explode("v",$key_version)[1];
-            $key = EncryptionKey::where('version',$version)->first();
-            if(isset($key)){
-                $keyData = ['key' => $key->key, 'key_version' => "v".$key->version];
+            $key_data = $this->vaultClient->getDataByVersion($version);
+            if(isset($key_data["data"])){
+                $keyData = ['key' => $key_data["data"]["key"], 'key_version' => "v".$key_data["metadata"]["version"]];
                 Cache::put('encryption_key_'.$key_version, $keyData, now()->addMinutes(360)); // Cache for 360 minutes
-                return $key->key;
+                return $key_data["data"]["key"];
             }else{
                 return "";
             }
@@ -145,10 +145,8 @@ class EassService
     {
         // Generate a new encryption key
         $newKey = base64_encode(Str::random(32));
-        $old_key = EncryptionKey::latest('created_at')->first();
-        $key = new EncryptionKey();
-        $key->version = $old_key->version +1;
-        $key->key = $newKey;
-        $key->save();
+        $this->vaultClient->storeData([
+            "key" => $newKey
+        ]);
     }
 }

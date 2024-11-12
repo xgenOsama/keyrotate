@@ -3,6 +3,7 @@
 namespace App\Models\Traits;
 
 use App\Services\EassService;
+use Illuminate\Database\Eloquent\Builder;
 
 trait EaasTrait {
 
