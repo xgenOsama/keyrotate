@@ -1,4 +1,4 @@
-```
+```shell
 docker-compose up -d
 docker exec -it vault1 vault operator init
 # After running the initialization command, Vault will output:

@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  mysql-node1:
+    image: mysql:8.0
+    container_name: mysql-node1
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: keyrotate
+      MYSQL_USER: keyrotate
+      MYSQL_PASSWORD: keyrotate_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./node1-data:/var/lib/mysql
+      - ./mysql-ssl:/etc/mysql/ssl:ro
+      - ./mysql-config/node1.cnf:/etc/mysql/conf.d/my.cnf:ro
+
+  mysql-node2:
+    image: mysql:8.0
+    container_name: mysql-node2
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: keyrotate
+      MYSQL_USER: keyrotate
+      MYSQL_PASSWORD: keyrotate_password
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./node2-data:/var/lib/mysql
+      - ./mysql-ssl:/etc/mysql/ssl:ro
+      - ./mysql-config/node2.cnf:/etc/mysql/conf.d/my.cnf:ro
+
+  mysql-node3:
+    image: mysql:8.0
+    container_name: mysql-node3
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: keyrotate
+      MYSQL_USER: keyrotate
+      MYSQL_PASSWORD: keyrotate_password
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./node3-data:/var/lib/mysql
+      - ./mysql-ssl:/etc/mysql/ssl:ro
+      - ./mysql-config/node3.cnf:/etc/mysql/conf.d/my.cnf:ro
+  mysql-router:
+      image: mysql/mysql-router:8.0
+      container_name: mysql-router
+      depends_on:
+        - mysql-node1
+        - mysql-node2
+        - mysql-node3
+      environment:
+        MYSQL_ROOT_PASSWORD: rootpassword
+      ports:
+        - "6446:6446"
+      command: >
+        mysqlrouter --bootstrap clusteradmin@mysql-node1:3306 --directory /router
