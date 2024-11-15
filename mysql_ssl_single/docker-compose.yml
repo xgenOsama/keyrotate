@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-secure
+    restart: always
+    ports:
+      - "3307:3306" # localhost:3307
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: keyrotate
+      MYSQL_USER: keyrotate
+      MYSQL_PASSWORD: keyrotate_password
+    volumes:
+      - ./mysql-ssl:/etc/mysql/ssl:ro
+      - ./mysql_data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/my.cnf:ro
+
+volumes:
+  mysql_data:

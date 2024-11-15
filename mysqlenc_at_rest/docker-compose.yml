@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mysql:
+    build:
+      context: .  # Use this if you have a Dockerfile with custom configurations
+      dockerfile: Dockerfile  # Optional: Only if you’re using a custom Dockerfile
+    image: mysql-encrypted  # Use `mysql:latest` if not using a custom Dockerfile
+    container_name: mysql-secure
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: keyrotate
+      MYSQL_DATABASE: keyrotate
+      MYSQL_PASSWORD: keyrotate_password
+    ports:
+      - "3307:3306"  # Map MySQL port to localhost
+    volumes:
+      - ./mysql-data:/var/lib/mysql           # Persistent data storage
+      - ./mysql-keyring:/var/lib/mysql-keyring # Persistent keyring storage
+    networks:
+      - laravel
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - "8080:80"  # Map phpMyAdmin port to localhost
+    environment:
+      PMA_HOST: mysql         # MySQL host
+      PMA_USER: keyrotate          # MySQL user (or your custom user)
+      PMA_PASSWORD: keyrotate_password  # MySQL user's password
+    depends_on:
+      - mysql                 # Ensure MySQL starts before phpMyAdmin
+    networks:
+      - laravel
+volumes:
+  mysql-data:
+  mysql-keyring:
+networks:
+  laravel:
+    driver: bridge

@@ -93,6 +93,7 @@ class VaultService
 
     private function sendRequest($url, $payload = null, $headers = [], $method = 'GET', $maxRetries = 3, $retryDelay = 1) {
         $attempt = 0;
+    
         while ($attempt < $maxRetries) {
             $ch = curl_init($url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -105,19 +106,26 @@ class VaultService
             $error = curl_errno($ch);
             if ($error) {
                 $attempt++;
+                $errorMessage = curl_strerror($error);
                 curl_close($ch);
-                // If max retries reached, return the last error
-                if ($attempt >= $maxRetries) {
-                    return ['error' => curl_strerror($error)];
+                // Check if the error is a server down issue
+                if (in_array($error, [CURLE_COULDNT_CONNECT, CURLE_OPERATION_TIMEOUTED, CURLE_COULDNT_RESOLVE_HOST])) {
+                    // If max retries reached, return a server down message
+                    if ($attempt >= $maxRetries) {
+                        return ['errors' => 'Server might be down: ' . $errorMessage];
+                    }
                 }
-                // Wait before retrying
+    
+                // Wait before retrying if other error occurred
                 sleep($retryDelay);
             } else {
                 curl_close($ch);
                 return json_decode($response, true);
             }
         }
-        // If all retries fail, return a generic error
-        return ['error' => 'Request failed after maximum retries'];
+    
+        // If all retries fail for other reasons, return a generic error
+        return ['errors' => 'Request failed after maximum retries'];
     }
+    
 }

@@ -52,7 +52,7 @@ trait EaasTrait {
     private function shouldDecrypt()
     {
         // Check for specific condition before decryption
-        return $this->encryption_key_version !== null;  // Replace 'specific_vault_value' with your actual condition
+        return $this->encryption_key_version !== null && $this->encryption_key_version !== "";  // Replace 'specific_vault_value' with your actual condition
     }
 
     protected function getEncryptionKeyVersion(): string

@@ -55,7 +55,8 @@ class EassService
         // Decrypt the data using the key and IV
         $decrypted = openssl_decrypt($encryptedData, self::METHOD, $this->key, 0, $iv);
         if ($decrypted === false) {
-            throw new Exception('Decryption failed');
+            return $encryptedValue;
+            //throw new Exception('Decryption failed');
         }
         return $decrypted;
     }
@@ -85,7 +86,8 @@ class EassService
         // Decrypt the data using the key and IV
         $decrypted = openssl_decrypt($encryptedData, self::METHOD, $key, 0, $iv);
         if ($decrypted === false) {
-            throw new Exception('Decryption failed');
+            return $encryptedValue;
+            //throw new Exception('Decryption failed');
         }
         return $decrypted;
     }
@@ -103,6 +105,8 @@ class EassService
                 $keyData = ['key' => $key_data["data"]["key"], 'key_version' => "v".$key_data["metadata"]["version"]];
                 Cache::put('encryption_key', $keyData, now()->addMinutes(1)); // Cache for 10 minutes                // return the key 
                 return $key_data["data"]["key"];
+            }else{
+                return "";
             }
         }
     }
@@ -120,6 +124,8 @@ class EassService
                 Cache::put('encryption_key', $keyData, now()->addMinutes(1)); // Cache for 10 minutes
                 // return the key 
                 return "v".$key_data["metadata"]["version"];
+            }else {
+                return "";
             }
         }
     }
