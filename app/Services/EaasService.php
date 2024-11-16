@@ -6,7 +6,7 @@ use Exception;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 
-class EassService
+class EaasService
 {
     private const METHOD = 'aes-256-cbc';
     private $key = "";
@@ -19,7 +19,6 @@ class EassService
      * Encrypt a value with a specific key.
      *
      * @param  string  $value
-     * @param  string  $key
      * @return string
      */
     public function encrypt(string $value): string
@@ -35,11 +34,32 @@ class EassService
         return base64_encode($iv . $encrypted);
     }
 
+
+    public function encryptFile(string $filePath): string
+    {
+        // Read file contents
+        $fileContents = file_get_contents($filePath);
+        if ($fileContents === false) {
+            throw new Exception('Unable to read file.');
+        }
+
+        // Generate an initialization vector (IV)
+        $iv = random_bytes(openssl_cipher_iv_length(self::METHOD));
+
+        // Encrypt the file contents using the key and IV
+        $encrypted = openssl_encrypt($fileContents, self::METHOD, $this->key, 0, $iv);
+        if ($encrypted === false) {
+            throw new Exception('Encryption failed');
+        }
+
+        // Combine IV and encrypted data, then encode them for storage
+        return base64_encode($iv . $encrypted);
+    }
+
     /**
      * Decrypt a value with a specific key.
      *
      * @param  string  $encryptedValue
-     * @param  string  $key
      * @return string
      * @throws Exception
      */
@@ -59,6 +79,33 @@ class EassService
             //throw new Exception('Decryption failed');
         }
         return $decrypted;
+    }
+
+
+    public function decryptFile(string $encryptedFilePath,$key_version)
+    {
+        $key = $this->getKeyByVersion($key_version);
+        // Read the encrypted file content
+        $encryptedFileContent = file_get_contents($encryptedFilePath);
+        if ($encryptedFileContent === false) {
+            throw new Exception('Failed to read encrypted file.');
+        }
+        // Decode the base64-encoded content
+        $decoded = base64_decode($encryptedFileContent);
+        if ($decoded === false) {
+            throw new Exception('Invalid encrypted file content.');
+        }
+        // Get the IV length for the encryption method
+        $ivLength = openssl_cipher_iv_length(self::METHOD);
+        // Extract the IV and encrypted data
+        $iv = substr($decoded, 0, $ivLength);
+        $encryptedData = substr($decoded, $ivLength);
+        // Decrypt the data using the key and IV
+        $decryptedFile = openssl_decrypt($encryptedData, self::METHOD, $key, 0, $iv);
+        if ($decryptedFile === false) {
+            throw new Exception('Decryption failed');
+        }
+        return $decryptedFile;
     }
 
     /**

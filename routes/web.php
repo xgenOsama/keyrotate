@@ -25,3 +25,4 @@ Route::get('/posts/create', [App\Http\Controllers\PostController::class, 'create
 Route::post('/posts/create', [App\Http\Controllers\PostController::class, 'store'])->name('posts.store');
 Route::post('/posts/edit/{id}', [App\Http\Controllers\PostController::class, 'update'])->name('posts.update');
 Route::get('/posts/edit/{id}', [App\Http\Controllers\PostController::class, 'edit'])->name('posts.edit');
+Route::get('/posts/{post}/image', [App\Http\Controllers\PostController::class, 'serveImage'])->name('posts.serveImage');

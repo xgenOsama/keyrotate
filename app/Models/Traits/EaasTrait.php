@@ -2,7 +2,7 @@
 
 namespace App\Models\Traits;
 
-use App\Services\EassService;
+use App\Services\EaasService;
 use Illuminate\Database\Eloquent\Builder;
 
 trait EaasTrait {
@@ -10,7 +10,7 @@ trait EaasTrait {
     protected $eaasService;
 
     public function __construct(array $attributes = array()) {
-      $this->eaasService = new EassService();
+      $this->eaasService = new EaasService();
       parent::__construct($attributes);
     }
     // Encrypt attributes before saving to the database

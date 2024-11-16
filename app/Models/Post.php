@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Post extends Model
 {
     use HasFactory, EaasTrait;    
-    protected $fillable = ['title','content','tenant_id'];
+    protected $fillable = ['title','content','tenant_id','file'];
     // List of columns that should be encrypted only chose string values 
     protected $encryptedColumns = ['title', 'content'];
 
